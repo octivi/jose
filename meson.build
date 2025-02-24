@@ -4,7 +4,8 @@ project('jose', 'c', license: 'APL2',
     'c_std=gnu99',
     'prefix=/usr',
     'warning_level=2',
-    'werror=true'
+    'werror=true',
+    'default_library=shared'
   ],
   meson_version: '>=0.47.0',
 )

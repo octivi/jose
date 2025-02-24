@@ -134,3 +134,65 @@ use:
 
 Once built it does not require meson and pkgconf,
 but still requires jansson and openssl.
+
+## Static Linking
+
+### Static Building libjose Library
+
+By default only shared `libjose` library is built.
+
+You can build static version in two ways:
+
+1. Building both a static and shared library. Source files will be compiled
+only once and object files will be reused to build both shared and static
+libraries:
+    ```bash
+    meson setup .. --prefix=/usr/local -Ddefault_library=both
+    ```
+
+2. Building only a static library:
+    ```bash
+    meson setup .. --prefix=/usr/local -Ddefault_library=static
+    ```
+
+### Static Linking with libjose Library
+
+The `libjose` library uses GCC/Clang's constructor attribute for plugin
+registration. For example, in [`lib/openssl/ec.c`](lib/openssl/ec.c):
+
+```c
+static void __attribute__((constructor)) constructor(void)
+```
+
+When statically linking with `libjose`, you must link all contents of the
+library, regardless of whether they are used or not. This requirement exists
+because of how constructor attributes work in static linking.
+
+You can achieve this in two ways:
+
+1. Using GCC/Clang linker flags:
+    ```bash
+    -Wl,-whole-archive
+    ```
+
+2. Using Meson build option:
+    ```meson
+    link_whole: libjose_lib
+    ```
+
+For more information, see:
+- [Issue #41: Static linking problems](https://github.com/latchset/jose/issues/41)
+- [Stack Overflow: GCC constructor attribute linking](https://stackoverflow.com/questions/6589772/gcc-functions-with-constructor-attribute-are-not-being-linked)
+- [`./cmd/meson.build`](cmd/meson.build)
+
+### jose Command-Line Tool
+
+To build the `jose` command-line tool with static linking it is required
+to force build static library.
+
+```bash
+meson setup .. --prefix=/usr -Ddefault_library=static 
+```
+
+By default, the command-line tool `jose` is statically linked only with
+`libjose`. Other libraries are linked dynamically (e.g. `libjansson`).

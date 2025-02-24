@@ -12,7 +12,7 @@ else
   endif
 endif
 
-libjose_lib = shared_library('jose',
+libjose_lib = library('jose',
   'misc.c',           'misc.h',
   'cfg.c',
   'io.c',
@@ -52,8 +52,10 @@ libjose_lib = shared_library('jose',
   install: true
 )
 
+is_static = get_option('default_library') == 'static'
 libjose_dep = declare_dependency(
   include_directories: incdir,
   dependencies: jansson,
-  link_with: libjose_lib
+  link_with: is_static ? [] : libjose_lib,
+  link_whole: is_static ? libjose_lib : []
 )

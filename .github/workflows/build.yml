@@ -76,6 +76,31 @@ jobs:
           fi
           cat build/meson-private/jose.pc
 
+      - name: Build jose (static)
+        run: |
+          mkdir -p build-static && cd build-static
+          export ninja=$(command -v ninja)
+          [ -z "${ninja}" ] && export ninja=$(command -v ninja-build)
+          meson setup .. -Ddefault_library=static || cat meson-logs/meson-log.txt >&2
+          ${ninja}
+
+      - name: Run tests (static)
+        run: |
+          cd build-static
+          if ! meson test; then
+            cat meson-logs/testlog.txt >&2
+            exit -1
+          fi
+
+      - name: Show full test logs (static)
+        run: |
+          if [ -r build-static/meson-logs/testlog.txt ]; then
+            cat build-static/meson-logs/testlog.txt >&2
+          else
+            echo "No test log available" >&2
+          fi
+          cat build-static/meson-private/jose.pc
+
     container:
       image: ${{matrix.os}}
       env:
@@ -124,6 +149,31 @@ jobs:
           fi
           cat build/meson-private/jose.pc
 
+      - name: Build jose (static)
+        run: |
+          mkdir -p build-static && cd build-static
+          export ninja=$(command -v ninja)
+          [ -z "${ninja}" ] && export ninja=$(command -v ninja-build)
+          CFLAGS=-I$(brew --prefix openssl)/include LDFLAGS=-L$(brew --prefix openssl)/lib PKG_CONFIG_PATH=$(brew --prefix openssl)/lib/pkgconfig meson setup .. -Ddefault_library=static || cat meson-logs/meson-log.txt >&2
+          ${ninja}
+  
+      - name: Run tests (static)
+        run: |
+          cd build-static
+          if ! meson test; then
+            cat meson-logs/testlog.txt >&2
+            exit -1
+          fi
+  
+      - name: Show full test logs (static)
+        run: |
+          if [ -r build-static/meson-logs/testlog.txt ]; then
+            cat build-static/meson-logs/testlog.txt >&2
+          else
+            echo "No test log available" >&2
+          fi
+          cat build-static/meson-private/jose.pc
+  
     env:
       DISTRO: osx:macos-latest
       CC: ${{ matrix.compiler }}
